@@ -1525,25 +1525,25 @@
         <span class="tier-h-free">درسان مجانيان ✦</span>
       </div>
       <div class="lessons-grid">
-        <div class="lesson-card free" onclick="openLesson(1,'مرحباً بعالم البرمجة')" id="lcard-1">
+        <div class="lesson-card free" id="lcard-1" onclick="openLesson(1,'مرحباً بعالم البرمجة')">
           <div class="lesson-num">١</div>
           <div class="lesson-info"><div class="lesson-title">مرحباً بعالم البرمجة</div><div class="lesson-desc">مقدمة في التفكير المنطقي</div></div>
-          <span class="lesson-badge free-badge">مجاني</span>
+          <span class="lesson-badge free-badge" id="lbadge-1">مجاني</span>
         </div>
-        <div class="lesson-card free" onclick="openLesson(2,'أول لعبة بـ Scratch')" id="lcard-2">
+        <div class="lesson-card free" id="lcard-2" onclick="openLesson(2,'أول لعبة بـ Scratch')">
           <div class="lesson-num">٢</div>
           <div class="lesson-info"><div class="lesson-title">أول لعبة بـ Scratch</div><div class="lesson-desc">نبني لعبة بسيطة خطوة بخطوة</div></div>
-          <span class="lesson-badge free-badge">مجاني</span>
+          <span class="lesson-badge free-badge" id="lbadge-2">مجاني</span>
         </div>
-        <div class="lesson-card free" onclick="openLesson(3,'الحركة والأحداث')" id="lcard-3">
+        <div class="lesson-card free" id="lcard-3" onclick="openLesson(3,'الحركة والأحداث')">
           <div class="lesson-num">٣</div>
           <div class="lesson-info"><div class="lesson-title">الحركة والأحداث</div><div class="lesson-desc">تحريك الكائنات بالمفاتيح</div></div>
-          <span class="lesson-badge free-badge">مجاني</span>
+          <span class="lesson-badge free-badge" id="lbadge-3">مجاني</span>
         </div>
-        <div class="lesson-card free" onclick="openLesson(4,'الشروط واللعبة الكاملة')" id="lcard-4">
+        <div class="lesson-card free" id="lcard-4" onclick="openLesson(4,'الشروط واللعبة الكاملة')">
           <div class="lesson-num">٤</div>
           <div class="lesson-info"><div class="lesson-title">الشروط واللعبة الكاملة</div><div class="lesson-desc">if / else وبناء لعبة حقيقية</div></div>
-          <span class="lesson-badge free-badge">مجاني</span>
+          <span class="lesson-badge free-badge" id="lbadge-4">مجاني</span>
         </div>
       </div>
     </div>
@@ -1687,7 +1687,17 @@
     const name = (user.displayName || user.email).split(' ')[0];
     document.getElementById('dash-username').textContent     = `مرحباً، ${name}`;
     document.getElementById('dash-welcome-name').textContent = `مرحباً، ${name} 👋`;
-    setTimeout(() => refreshDashboardXP(), 500);
+    // Restore completed lesson badges from Firestore
+    getDoc(doc(db, 'users', user.uid)).then(snap => {
+      const completed = snap.data()?.lessonsCompleted || [];
+      completed.forEach(key => {
+        const num = key.replace('lesson','');
+        const badge = document.getElementById('lbadge-' + num);
+        const card  = document.getElementById('lcard-' + num);
+        if (badge) { badge.textContent = '✅ مكتمل'; badge.style.cssText = 'background:#dcfce7;color:#16a34a'; }
+        if (card)  { card.style.borderColor = 'rgba(22,163,74,0.4)'; }
+      });
+    }).catch(()=>{});
   }
 
   // ── AUTH STATE LISTENER (auto-login) ──
@@ -1797,10 +1807,7 @@
   window.closeUpgrade = function() {
     document.getElementById('upgrade-modal').style.display = 'none';
   }
-  window.openLesson = function(num, title) {
-    document.getElementById('lesson-modal-title').textContent = 'الدرس ' + num + ': ' + title;
-    document.getElementById('lesson-modal').style.display = 'flex';
-  }
+  // openLesson defined below
   window.closeLesson = function() {
     document.getElementById('lesson-modal').style.display = 'none';
   }
@@ -2072,7 +2079,7 @@
   }
 
   // ══ STUDENT LESSON VIEWER ══
-  window.openLesson = async function(lessonId, title) {
+  window.openLesson = function(lessonId, title) {
     const base = window.location.pathname.replace(/\/[^\/]*$/, '/');
     const files = { 1: base+'lesson1.html', 2: base+'lesson2.html', 3: base+'lesson3.html', 4: base+'lesson4.html' };
     if (files[lessonId]) { window.location.href = files[lessonId]; return; }
@@ -2080,39 +2087,7 @@
     document.getElementById('lesson-modal').style.display = 'flex';
   }
 
-
-  // ── RESTORE COMPLETED LESSONS ON DASHBOARD LOAD ──
-  async function refreshDashboardXP() {
-    const user = auth.currentUser;
-    if (!user) return;
-    try {
-      const snap = await getDoc(doc(db, 'users', user.uid));
-      const data = snap.data() || {};
-      const completed = data.lessonsCompleted || [];
-      const xp = data.xp || 0;
-      const subEl = document.querySelector('.dash-welcome-sub');
-      if (subEl) subEl.textContent = `⭐ ${xp} XP — أكملت ${completed.length} درس`;
-      completed.forEach(key => {
-        const num = parseInt(key.replace('lesson', ''));
-        if (!isNaN(num)) markLessonCardComplete(num);
-      });
-    } catch(e) {}
-  }
-
-  function markLessonCardComplete(num) {
-    const card = document.getElementById('lcard-' + num);
-    if (!card) return;
-    card.style.background = '#dcfce7';
-    card.style.borderColor = 'rgba(22,163,74,0.4)';
-    const badge = card.querySelector('.lesson-badge');
-    if (badge) {
-      badge.textContent = '✅ مكتمل';
-      badge.style.background = '#dcfce7';
-      badge.style.color = '#16a34a';
-    }
-  }
-
-
+  function showLessonViewer(lesson) {
     document.getElementById('lv-title').textContent       = lesson.title;
     document.getElementById('lv-desc').textContent        = lesson.description || '';
     document.getElementById('lv-tier').textContent        = lesson.tier === 'asghar' ? '🌱 الأصغر' : lesson.tier === 'mutawassit' ? '⚡ المتوسط' : '🚀 الكبير';
