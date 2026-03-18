@@ -1525,25 +1525,25 @@
         <span class="tier-h-free">درسان مجانيان ✦</span>
       </div>
       <div class="lessons-grid">
-        <div class="lesson-card free" onclick="openLesson(1,'مرحباً بعالم البرمجة')">
+        <div class="lesson-card free" onclick="openLesson(1,'مرحباً بعالم البرمجة')" id="lcard-1">
           <div class="lesson-num">١</div>
           <div class="lesson-info"><div class="lesson-title">مرحباً بعالم البرمجة</div><div class="lesson-desc">مقدمة في التفكير المنطقي</div></div>
           <span class="lesson-badge free-badge">مجاني</span>
         </div>
-        <div class="lesson-card free" onclick="openLesson(2,'أول لعبة بـ Scratch')">
+        <div class="lesson-card free" onclick="openLesson(2,'أول لعبة بـ Scratch')" id="lcard-2">
           <div class="lesson-num">٢</div>
           <div class="lesson-info"><div class="lesson-title">أول لعبة بـ Scratch</div><div class="lesson-desc">نبني لعبة بسيطة خطوة بخطوة</div></div>
           <span class="lesson-badge free-badge">مجاني</span>
         </div>
-        <div class="lesson-card locked" onclick="showUpgrade()">
+        <div class="lesson-card free" onclick="openLesson(3,'الحركة والأحداث')" id="lcard-3">
           <div class="lesson-num">٣</div>
-          <div class="lesson-info"><div class="lesson-title">الشروط والقرارات</div><div class="lesson-desc">if / else بأسلوب مرئي</div></div>
-          <span class="lesson-badge lock-badge">🔒</span>
+          <div class="lesson-info"><div class="lesson-title">الحركة والأحداث</div><div class="lesson-desc">تحريك الكائنات بالمفاتيح</div></div>
+          <span class="lesson-badge free-badge">مجاني</span>
         </div>
-        <div class="lesson-card locked" onclick="showUpgrade()">
+        <div class="lesson-card free" onclick="openLesson(4,'الشروط واللعبة الكاملة')" id="lcard-4">
           <div class="lesson-num">٤</div>
-          <div class="lesson-info"><div class="lesson-title">مشروع نهائي</div><div class="lesson-desc">بناء مشروع متكامل</div></div>
-          <span class="lesson-badge lock-badge">🔒</span>
+          <div class="lesson-info"><div class="lesson-title">الشروط واللعبة الكاملة</div><div class="lesson-desc">if / else وبناء لعبة حقيقية</div></div>
+          <span class="lesson-badge free-badge">مجاني</span>
         </div>
       </div>
     </div>
@@ -2072,12 +2072,17 @@
 
   // ══ STUDENT LESSON VIEWER ══
   window.openLesson = async function(lessonId, title) {
-    // Open standalone lesson file
-    if (lessonId === 1) { window.location.href = 'lesson1.html'; return; }
-    if (lessonId === 2) { window.location.href = 'lesson2.html'; return; }
-    // Fallback modal for locked lessons
+    const files = { 1:'lesson1.html', 2:'lesson2.html', 3:'lesson3.html', 4:'lesson4.html' };
+    if (files[lessonId]) { window.location.href = files[lessonId]; return; }
     document.getElementById('lesson-modal-title').textContent = 'الدرس ' + lessonId + ': ' + title;
     document.getElementById('lesson-modal').style.display = 'flex';
+  }
+
+  // ── AUTO-RESTORE COMPLETED LESSONS ON LOAD ──
+  const _origLoadDashboard = loadDashboard;
+  function loadDashboard(user) {
+    _origLoadDashboard(user);
+    setTimeout(() => refreshDashboardXP(), 500);
   }
 
   function showLessonViewer(lesson) {
